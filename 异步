@@ -68,3 +68,28 @@ public class AsyncJobResultVo {
     }
 }
 
+3.使用案例
+  public ResponseDataVo createStructureMassCostDocument(CreateStructureMassCostDocumentReqVO reqVo) {
+        // 校验参数
+        ValidateUtils.validateBean(reqVo);
+        RequestContext requestContext = (RequestContext) RequestContext.getCurrent(true);
+        String jobId = asyncJobService.generateJobId();
+        asyncJobService.setProgress(jobId,
+            new AsyncJobStepVo(AsyncJobStepCodeConstant.MDA_ASYNC_JOB_STEP_00, "启动异步任务"));
+        AsyncJobResultVo asyncJobResultVo = this.buildAsyncCreateMassCostDocJobResult(jobId);
+
+        ThreadPoolUtils.THREAD_POOL_EXECUTOR
+            .submit(() -> createMassCostDocAsync(reqVo, requestContext, asyncJobResultVo));
+
+        return ResponseDataVo.ok(asyncJobResultVo);
+    }
+
+    private AsyncJobResultVo buildAsyncCreateMassCostDocJobResult(String jobId) {
+        AsyncJobResultVo asyncJobResultVo = new AsyncJobResultVo();
+        asyncJobResultVo.setJobId(jobId);
+        asyncJobResultVo.addJobStep(new AsyncJobStepVo(AsyncJobStepCodeConstant.MDA_ASYNC_JOB_STEP_01, "校验文档与部件信息"));
+        asyncJobResultVo.addJobStep(new AsyncJobStepVo(AsyncJobStepCodeConstant.MDA_ASYNC_JOB_STEP_02, "创建文档"));
+        asyncJobResultVo.addJobStep(new AsyncJobStepVo(AsyncJobStepCodeConstant.MDA_ASYNC_JOB_STEP_03, "创建文档与部件关联关系"));
+        return asyncJobResultVo;
+    }
+
