@@ -1,0 +1,70 @@
+1.发送异步消息类
+@Autowired
+public class AsyncJobService implements IAsyncJobService {
+    
+    private static final String HDP_MDA_ASYNC_JOB_ID_PREFIX = "HDP_MDA:ASYNC_JOB:JOB_ID:";
+    
+    @Inject
+    private StringRedisTemplate stringRedisTemplate;
+    
+    @Override
+    public String generateJobId() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+    
+    @Override
+    public void setProgress(String jobId,AsyncJobStepVo step) {
+        String msgJson = JSON.toJSONString(ResponseDataVo.progress(step.getStepNo(), step.getContent()));
+        stringRedisTemplate.opsForValue().set(HDP_MDA_ASYNC_JOB_ID_PREFIX+jobId, msgJson, 10, TimeUnit.MINUTES);  
+        
+    }
+
+    @Override
+    public String getProgress(String jobId) {
+        return stringRedisTemplate.opsForValue().get(HDP_MDA_ASYNC_JOB_ID_PREFIX+jobId);
+    }
+
+    
+    @Override
+    public void setError(String jobId, String errorCode, String errorMsg) {
+        String msgJson = JSON.toJSONString(ResponseDataVo.error(errorCode, errorMsg));
+        stringRedisTemplate.opsForValue().set(HDP_MDA_ASYNC_JOB_ID_PREFIX+jobId, msgJson, 10, TimeUnit.MINUTES);  
+    }
+
+    @Override
+    public void setSuccess(String jobId, Object data) {
+        String msgJson = JSON.toJSONString(ResponseDataVo.ok(data));
+        stringRedisTemplate.opsForValue().set(HDP_MDA_ASYNC_JOB_ID_PREFIX+jobId, msgJson, 10, TimeUnit.MINUTES);  
+    }
+}
+
+2.异步消息对象
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+public class AsyncJobResultVo {
+    
+    private String jobId; // 任务id
+    
+    private List<AsyncJobStepVo> asyncJobSteps = new ArrayList<AsyncJobStepVo>(); //步骤明细
+    
+    @JsonIgnore
+    private int stepIndex = 0;
+    
+   
+    public void addJobStep(AsyncJobStepVo stepVo) {
+        asyncJobSteps.add(stepVo);
+    }
+    
+   
+    public AsyncJobStepVo nextJobStep() {
+        AsyncJobStepVo obj = null;
+        if(asyncJobSteps.size() > stepIndex) {
+            obj = asyncJobSteps.get(stepIndex);
+            stepIndex++;
+        }
+        return obj;
+    }
+}
+
