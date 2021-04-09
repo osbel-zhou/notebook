@@ -1,3 +1,121 @@
 1.windows环境下启动redis
 https://www.runoob.com/redis/redis-install.html
 解压redis windows版本，cmd执行redis-server.exe redis.windows.conf
+
+redis连接池：
+@Configuration
+public class RedisConfig  extends JCacheConfigurerSupport {
+    @Autowired
+    private Environment environment;
+    private Set<RedisNode> getClusterNodes() {
+        // 添加redis集群的节点
+        Set<RedisNode> clusterNodes = new HashSet<RedisNode>();
+        String strClusters = environment.getProperty("redis.cluster.nodes");
+        if(strClusters!=null) {
+            String[] clusters = strClusters.split(",");
+            for (String node : clusters) {
+                String[] nodes = StringUtils.split(node, ":");
+                if(nodes!=null) {
+                    clusterNodes.add(new RedisNode(nodes[0], Integer.parseInt(nodes[1])));
+                }
+            }
+        }
+        return clusterNodes;
+    }
+    private RedisClusterConfiguration redisClusterConfiguration() {
+        RedisClusterConfiguration redisClusterConfig = new RedisClusterConfiguration();
+        redisClusterConfig.setClusterNodes(getClusterNodes());
+        String strMaxRedirects = environment.getProperty("redis.cluster.maxredirects");
+        if(!StringUtils.isEmpty(strMaxRedirects)) {
+            int maxRedirects = Integer.parseInt(strMaxRedirects);
+            redisClusterConfig.setMaxRedirects(maxRedirects);
+        }
+        return redisClusterConfig;
+    }
+
+    private JedisPoolConfig jedisPoolConfig() {
+        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+        String maxIdle = environment.getProperty("redis.cluster.pool.maxIdle");
+        String maxTotal = environment.getProperty("redis.cluster.pool.maxTotal");
+        String maxWaitMillis = environment.getProperty("redis.cluster.pool.maxWaitMillis");
+        String minEvictableIdleTimeMillis = environment.getProperty("redis.cluster.pool.minEvictableIdleTimeMillis");
+        String numTestsPerEvictionRun = environment.getProperty("redis.cluster.pool.numTestsPerEvictionRun");
+        String timeBetweenEvictionRunsMillis = environment.getProperty("redis.cluster.pool.timeBetweenEvictionRunsMillis");
+        String testOnBorrow = environment.getProperty("redis.cluster.pool.testOnBorrow");
+        String testWhileIdle = environment.getProperty("redis.cluster.pool.testWhileIdle");
+
+        if(!StringUtils.isEmpty(maxIdle)) {
+            jedisPoolConfig.setMaxIdle(Integer.parseInt(maxIdle));
+        }
+
+        if(!StringUtils.isEmpty(maxTotal)) {
+            jedisPoolConfig.setMaxTotal(Integer.parseInt(maxTotal));
+        }
+
+        if(!StringUtils.isEmpty(maxWaitMillis)) {
+            jedisPoolConfig.setMaxWaitMillis(Integer.parseInt(maxWaitMillis));
+        }
+
+        if(!StringUtils.isEmpty(minEvictableIdleTimeMillis)) {
+            jedisPoolConfig.setMinEvictableIdleTimeMillis(Integer.parseInt(minEvictableIdleTimeMillis));
+        }
+
+        if(!StringUtils.isEmpty(numTestsPerEvictionRun)) {
+            jedisPoolConfig.setNumTestsPerEvictionRun(Integer.parseInt(numTestsPerEvictionRun));
+        }
+
+        if(!StringUtils.isEmpty(timeBetweenEvictionRunsMillis)) {
+            jedisPoolConfig.setTimeBetweenEvictionRunsMillis(Integer.parseInt(timeBetweenEvictionRunsMillis));
+        }
+
+        if(!StringUtils.isEmpty(testOnBorrow)) {
+            jedisPoolConfig.setTestOnBorrow(Boolean.parseBoolean(testOnBorrow));
+        }
+
+        if(!StringUtils.isEmpty(testWhileIdle)) {
+            jedisPoolConfig.setTestWhileIdle(Boolean.parseBoolean(testWhileIdle));
+        }
+        return jedisPoolConfig;
+    }
+
+    /**
+     * redisConnectionFactory
+
+     * @return ret
+     */
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        JedisConnectionFactory connectionFactory = new JedisConnectionFactory(
+            redisClusterConfiguration(), jedisPoolConfig());
+        String timeout = environment.getProperty("redis.cluster.timeout");
+        if(!StringUtils.isEmpty(timeout)) {
+            connectionFactory.setTimeout(Integer.parseInt(timeout));
+        }
+        String password = environment.getProperty("j2c.redisCache.password");
+        if (!StringUtils.isEmpty(password)) {
+            connectionFactory.setPassword(password);
+        }
+        return connectionFactory;
+    }
+}
+
+使用redisTemplate操作
+如：
+@Autowired
+private StringRedisTemplate stringRedisTemplate;
+
+redis的配置
+#redis
+redis.cluster.nodes=127.0.0.1:6379
+redis.cluster.timeout=10000
+redis.cluster.maxredirects=5
+redis.cluster.pool.maxIdle=30
+redis.cluster.pool.maxTotal=100
+redis.cluster.pool.maxWaitMillis=1000
+redis.cluster.pool.minEvictableIdleTimeMillis=300000
+redis.cluster.pool.numTestsPerEvictionRun=1024
+redis.cluster.pool.timeBetweenEvictionRunsMillis=30000
+redis.cluster.pool.testOnBorrow=true
+redis.cluster.pool.testWhileIdle=true
+
+
