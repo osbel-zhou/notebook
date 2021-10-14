@@ -1,0 +1,3 @@
+https://mp.weixin.qq.com/s?__biz=MzA3MDA5MDU5Mw==&mid=2247483673&idx=1&sn=96926bd8aa6d2e8d0783cab5487b7ae4&chksm=9ec36b17a9b4e20199c9f9dce82cefa3c251ee319965f5ba23aeeebe2338f222ff750b25b995&mpshare=1&scene=24&srcid=0817LA64CKb5mKOdfqFNVNDy&sharer_sharetime=1629210938627&sharer_shareid=1af14cb87f473ba0d9f0fab26649324f&ascene=14&devicetype=android-29&version=28000a31&nettype=cmnet&abtest_cookie=AAACAA%3D%3D&lang=zh_CN&exportkey=A7UC3%2BCTFnsr06T0rHTIHd0%3D&pass_ticket=tvJTIsGtFi46jtZg%2FRtqn%2FtgSWZThCyqjNKxfOv%2F5RnU%2BdQrHXm7AojddnuBK8VV&wx_header=1
+
+注意其中target文件夹中生成的java文件，需要使用Make Directory as Generated Source Root 使代码可以适使用
