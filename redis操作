@@ -1,0 +1,21 @@
+
+1.获取redis所有相关key值
+public List<String> getRedisKeys(String patternKey) {
+        //需要匹配的key，每次取十万条，递归获取
+        ScanOptions options = ScanOptions.scanOptions()
+                .count(100000)
+                .match(patternKey).build();
+        RedisSerializer<String> redisSerializer = (RedisSerializer<String>) redisTemplate.getKeySerializer();
+        Cursor cursor =
+                (Cursor) redisTemplate.executeWithStickyConnection(redisConnection -> new ConvertingCursor<>(redisConnection.scan(options), redisSerializer::deserialize));
+        List<String> result = new ArrayList<>();
+        while (cursor.hasNext()) {
+            result.add(cursor.next().toString());
+        }
+        try {
+            cursor.close();
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+        return result;
+    }
