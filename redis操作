@@ -18,4 +18,9 @@ public List<String> getRedisKeys(String patternKey) {
             log.error(e.getMessage());
         }
         return result;
-    }
+}
+    
+2.批量获取redis
+ public void batchGet(List<String> keys) {
+    List<Object> list = redisTemplate.opsForValue().multiGet(keys);
+}
