@@ -1,4 +1,4 @@
 ssh创建
 
-ssh-keygen -t rsa -C "W9014162@myoas.com" -b 4096
+ssh-keygen -t rsa -C "333333" -b 4096
 cat ~/.ssh/id_rsa.pub | clip
